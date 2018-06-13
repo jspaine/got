@@ -641,15 +641,31 @@ function normalizeArguments(url, opts) {
 	return opts;
 }
 
-function got(url, opts) {
+function getGot(debug) {
+	return function(url, opts) {
+		return got(url, opts, debug)
+	}
+}
+
+function got(url, opts, debug) {
 	try {
 		const normalizedArgs = normalizeArguments(url, opts);
+
+		if (debug) {
+			console.log("request", normalizedArgs.href, normalizedArgs.headers, normalizedArgs.body);
+		}
 
 		if (normalizedArgs.stream) {
 			return asStream(normalizedArgs);
 		}
 
-		return asPromise(normalizedArgs);
+
+		return asPromise(normalizedArgs).then(response => {
+			if (debug) {
+				console.log("response.body", response.body);
+			}
+			return response;
+		});
 	} catch (err) {
 		return Promise.reject(err);
 	}
@@ -673,4 +689,4 @@ for (const method of methods) {
 
 Object.assign(got, errors);
 
-module.exports = got;
+module.exports = {got, getGot};
